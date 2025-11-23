@@ -1,13 +1,28 @@
-gradio>=4.0
-requests
-python-dotenv
-langchain
-langchain-community
-langchain-core
-langchain-text-splitters
-faiss-cpu
-chromadb
-groq
-sounddevice
-soundfile
-numpy
+# UI Framework
+gradio>=5.0.0
+
+# HTTP Requests (for Groq API)
+requests>=2.31.0
+
+# Environment Variables
+python-dotenv>=1.0.0
+
+# LangChain for scoring and RAG
+langchain>=0.3.0
+langchain-community>=0.3.0
+langchain-core>=0.3.0
+langchain-openai>=0.2.0
+langchain-text-splitters>=0.3.0
+
+# Vector Stores
+faiss-cpu>=1.7.4
+chromadb>=0.4.0
+
+# Groq API (alternative: use requests directly)
+groq>=0.9.0
+
+# Audio Processing (for voice mode)
+sounddevice>=0.4.6
+soundfile>=0.12.1
+numpy>=1.24.0
+

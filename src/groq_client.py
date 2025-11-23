@@ -1,28 +1,56 @@
 # Groq API wrapper
+# Pure LLM communication layer
+from dotenv import load_dotenv
+load_dotenv()
+
 import os
-from openai import OpenAI
+import requests
 
 
-class GroqClient:
+def groq_chat(messages, model="llama-3.1-8b-instant", temperature=0.4):
     """
-    Wrapper for Groq API using OpenAI-compatible interface.
+    Send messages to Groq API and get a response.
     """
-    
-    def __init__(self):
-        self.client = OpenAI(
-            api_key=os.getenv("GROQ_API_KEY"),
-            base_url="https://api.groq.com/openai/v1"
+
+    # Load API key
+    api_key = os.getenv("GROQ_API_KEY")
+    if not api_key:
+        raise ValueError("GROQ_API_KEY environment variable not set")
+
+    # Groq OpenAI-compatible endpoint
+    url = "https://api.groq.com/openai/v1/chat/completions"
+
+    # Headers
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
+
+    # Payload
+    payload = {
+        "model": model,
+        "messages": messages,
+        "temperature": temperature
+    }
+
+    try:
+        response = requests.post(url, json=payload, headers=headers, timeout=30)
+
+        # If bad request, show Groq's detailed error
+        if response.status_code >= 400:
+            raise Exception(
+                f"Groq API error {response.status_code}: {response.text}"
+            )
+
+        data = response.json()
+
+        # Extract Groq response safely
+        return data["choices"][0]["message"]["content"]
+
+    except requests.exceptions.RequestException as e:
+        raise Exception(f"Groq network error: {e}")
+
+    except (KeyError, IndexError):
+        raise Exception(
+            f"Unexpected Groq response format: {response.text}"
         )
-    
-    def generate_response(self, messages, model="llama-3.1-70b-versatile"):
-        """
-        Generate a response using Groq API.
-        
-        Args:
-            messages: List of message dictionaries
-            model: Model identifier
-            
-        Returns:
-            Generated response text
-        """
-        pass
