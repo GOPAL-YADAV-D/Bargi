@@ -1,53 +1,61 @@
-# Multi-stage interview logic
+import json
+import os
 
+def load_role_config(role_name):
+    """Load role configuration from JSON file."""
+    try:
+        # Map friendly names to filenames
+        role_map = {
+            "software engineer": "engineer.json",
+            "product manager": "product.json",
+            "sales": "sales.json"
+        }
+        
+        filename = role_map.get(role_name.lower())
+        if not filename:
+            return None
+            
+        path = os.path.join("roles", filename)
+        with open(path, "r") as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"Error loading role {role_name}: {e}")
+        return None
 
 def new_state():
     """
     Initialize a new interview state.
-    
-    Returns:
-        Dictionary representing initial interview state
-        {
-            "stage": Current stage (setup, intro, technical, behavioral, etc.)
-            "role": Selected role (engineer, product, sales, or None)
-            "history": List of conversation turns
-            "answers": List of user answers for scoring
-        }
     """
     return {
-        "stage": "setup",
+        "stage": "setup",  # setup -> await_role -> interview -> finished
         "role": None,
-        "history": [],
-        "answers": []
+        "context": None,  # Loaded role context from JSON
+        "history": [],  # Full conversation history
+        "answers": [],  # User answers for final summary
+        "scores": [],  # Scoring results for each answer
+        "current_question_index": 0,  # Track which base question we're on
+        "max_questions": 5,  # Number of main questions to ask
+        "followup_stage": False,  # Toggle between main question and follow-up
+        "current_question": None  # The question the user is currently answering
     }
-
 
 def update_state(state, user_msg, assistant_msg):
     """
     Update interview state with new conversation turn.
     
     Args:
-        state: Current state dictionary
-        user_msg: User's message
-        assistant_msg: Assistant's response
+        state (dict): Current interview state
+        user_msg (str): User's message
+        assistant_msg (str): Assistant's response
         
     Returns:
-        Updated state dictionary
-    
-    TODO:
-    - Add stage transition logic
-    - Track question-answer pairs for scoring
-    - Detect completion conditions
-    - Handle role-specific state updates
+        dict: Updated state
     """
-    # Append conversation turn to history
+    # Append conversation turn
     state["history"].append({
         "user": user_msg,
         "assistant": assistant_msg
     })
     
-    # TODO: Add logic to transition between stages
-    # TODO: Extract and store answers for final scoring
-    # TODO: Check if interview should move to next stage
-    
     return state
+

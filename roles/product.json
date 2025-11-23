@@ -29,5 +29,38 @@
     "Data-driven decision making",
     "Communication skills",
     "Leadership potential"
+  ],
+  "base_questions": [
+    "How do you prioritize features for a product roadmap?",
+    "Describe a product you launched successfully from concept to market.",
+    "How do you handle a stakeholder who strongly disagrees with your product vision?",
+    "What metrics do you track to measure product success?",
+    "How do you identify and validate user needs?",
+    "Explain a time you had to say 'no' to a feature request and why.",
+    "How do you collaborate with engineering and design teams?",
+    "What is your favorite product and why?",
+    "How do you handle a product failure or missed target?",
+    "Describe your process for conducting competitive analysis and market research."
+  ],
+  "competencies": [
+    "Product Strategy",
+    "User Empathy & Research",
+    "Data Analysis & Metrics",
+    "Stakeholder Management",
+    "Feature Prioritization",
+    "Cross-functional Leadership",
+    "Communication & Storytelling",
+    "Market & Competitive Analysis",
+    "Roadmap Planning"
+  ],
+  "sample_good_answers": [
+    "I use the RICE scoring model (Reach, Impact, Confidence, Effort) to objectively prioritize features against our quarterly OKRs. I also consider strategic alignment and technical dependencies.",
+    "I conducted 20 user interviews and analyzed our funnel data to identify that the checkout process had a 40% drop-off rate. I worked with UX to simplify it from 5 steps to 2, which increased conversion by 18%.",
+    "I believe in early and frequent communication with engineering during the discovery phase to ensure technical feasibility is considered. I also participate in sprint planning to answer questions and unblock the team."
+  ],
+  "sample_bad_answers": [
+    "I just go with my gut feeling on what features to build next.",
+    "I usually just tell the engineers what to build and let them figure it out.",
+    "I don't really track metrics, I prefer to talk to users and get qualitative feedback only."
   ]
 }

@@ -29,5 +29,37 @@
     "Communication clarity",
     "Code quality",
     "System design thinking"
+  ],
+  "base_questions": [
+    "Can you explain the difference between a process and a thread?",
+    "How do you handle error handling in your code?",
+    "Describe a challenging bug you fixed recently.",
+    "What is your experience with CI/CD pipelines?",
+    "Explain the concept of RESTful APIs and their advantages.",
+    "How would you optimize a slow database query?",
+    "What are the SOLID principles and why are they important?",
+    "Describe a time you had a disagreement with a team member about a technical decision.",
+    "How do you stay updated with new technologies and industry trends?",
+    "Explain the CAP theorem and provide a real-world example."
+  ],
+  "competencies": [
+    "System Design",
+    "Data Structures & Algorithms",
+    "Debugging & Problem Solving",
+    "Code Quality & Best Practices",
+    "Communication & Collaboration",
+    "Testing & Quality Assurance",
+    "Performance Optimization",
+    "Version Control & DevOps"
+  ],
+  "sample_good_answers": [
+    "I use a try-catch block for expected errors and ensure I log the stack trace for debugging. For critical failures, I implement a retry mechanism with exponential backoff. I also use custom exception types to make error handling more semantic and easier to debug.",
+    "I identified a memory leak in our production service by profiling the heap usage over time. I traced it to an unclosed database connection in a loop. I fixed it by using a context manager and implementing proper connection pooling.",
+    "I prefer to write unit tests before implementing features (TDD) to ensure requirements are met and prevent regressions. I aim for at least 80% code coverage and use integration tests for critical paths."
+  ],
+  "sample_bad_answers": [
+    "I just check if it works on my machine and ship it.",
+    "I don't really like writing tests, they take too much time and slow down development.",
+    "If the server gets slow, I usually just restart it and that fixes the problem."
   ]
 }

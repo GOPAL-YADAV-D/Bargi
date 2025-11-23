@@ -7,7 +7,7 @@ import os
 import requests
 
 
-def groq_chat(messages, model="llama-3.1-8b-instant", temperature=0.4):
+def groq_chat(messages, model="openai/gpt-oss-120b", temperature=0.4):
     """
     Send messages to Groq API and get a response.
     """

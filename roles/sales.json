@@ -29,5 +29,38 @@
     "Customer understanding",
     "Resilience",
     "Results orientation"
+  ],
+  "base_questions": [
+    "Sell me this pen.",
+    "How do you handle a prospect who says 'it's too expensive'?",
+    "Describe your sales process from prospecting to closing.",
+    "How do you deal with rejection?",
+    "Tell me about a time you missed your quota. What did you do?",
+    "How do you research a prospect before making a call?",
+    "What is your approach to building long-term customer relationships?",
+    "How do you handle a difficult or angry client?",
+    "What motivates you to succeed in sales?",
+    "Describe the most complex deal you've closed and how you did it."
+  ],
+  "competencies": [
+    "Prospecting & Lead Generation",
+    "Objection Handling",
+    "Closing Techniques",
+    "Active Listening",
+    "Resilience & Persistence",
+    "Negotiation Skills",
+    "Relationship Building",
+    "Product Knowledge",
+    "CRM & Sales Tools"
+  ],
+  "sample_good_answers": [
+    "When a prospect says it's too expensive, I focus on value rather than price. I ask questions to understand their pain points and demonstrate how our solution provides an ROI that far outweighs the investment. I also share case studies of similar clients.",
+    "I research the prospect's company news, recent funding rounds, LinkedIn activity, and their role to find a relevant hook for my outreach. I personalize every touchpoint to show I've done my homework.",
+    "I view rejection as a learning opportunity. After every 'no', I analyze what went wrong and refine my approach. I also maintain a positive mindset by celebrating small wins and focusing on my pipeline."
+  ],
+  "sample_bad_answers": [
+    "I just keep calling them until they answer or tell me to stop.",
+    "If they say it's too expensive, I immediately offer them a 20% discount to close the deal.",
+    "I don't really prepare for calls, I prefer to be spontaneous and wing it based on the conversation."
   ]
 }

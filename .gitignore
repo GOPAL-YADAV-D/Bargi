@@ -10,3 +10,4 @@ vectorstore/
 .cache/
 
 whisper/
+piper/
