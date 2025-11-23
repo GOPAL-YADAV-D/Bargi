@@ -1,30 +1,34 @@
 # Routing logic (text/voice, scoring)
 
 
-class InterviewRouter:
+def handle_message(message, state):
     """
-    Routes user input to appropriate handlers based on mode (text/voice).
-    Manages scoring triggers and interview flow.
+    Handle incoming message and route to appropriate components.
+    
+    Args:
+        message: User's text input from the UI
+        state: Current interview state dictionary
+        
+    Returns:
+        Dictionary with reply_text and reply_audio
+        {
+            "reply_text": str,
+            "reply_audio": str or None
+        }
+    
+    TODO:
+    - Add Groq API call for conversation generation
+    - Check if voice mode is enabled (route to TTS)
+    - Detect interview completion and trigger scoring
+    - Handle persona adaptation logic
+    - Manage stage transitions
     """
+    # Placeholder response
+    # Future: Call Groq API here based on state and message
+    # Future: If voice mode, generate audio via Piper TTS
+    # Future: Update state via state_manager
     
-    def __init__(self):
-        pass
-    
-    def route_input(self, input_data, mode="text"):
-        """
-        Route input to the appropriate handler.
-        
-        Args:
-            input_data: User input (text or audio)
-            mode: "text" or "voice"
-        """
-        pass
-    
-    def trigger_scoring(self, session_data):
-        """
-        Trigger scoring based on interview completion.
-        
-        Args:
-            session_data: Complete interview session data
-        """
-        pass
+    return {
+        "reply_text": "Router placeholder response",
+        "reply_audio": None
+    }

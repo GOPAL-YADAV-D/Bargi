@@ -1,35 +1,53 @@
 # Multi-stage interview logic
 
 
-class InterviewStateManager:
+def new_state():
     """
-    Manages multi-stage interview flow and state transitions.
-    Tracks current stage, questions asked, and user responses.
+    Initialize a new interview state.
+    
+    Returns:
+        Dictionary representing initial interview state
+        {
+            "stage": Current stage (setup, intro, technical, behavioral, etc.)
+            "role": Selected role (engineer, product, sales, or None)
+            "history": List of conversation turns
+            "answers": List of user answers for scoring
+        }
     """
+    return {
+        "stage": "setup",
+        "role": None,
+        "history": [],
+        "answers": []
+    }
+
+
+def update_state(state, user_msg, assistant_msg):
+    """
+    Update interview state with new conversation turn.
     
-    def __init__(self, role_config):
-        self.role_config = role_config
-        self.current_stage = 0
-        self.history = []
-    
-    def next_stage(self):
-        """Move to the next interview stage."""
-        pass
-    
-    def add_interaction(self, question, answer):
-        """
-        Record an interview interaction.
+    Args:
+        state: Current state dictionary
+        user_msg: User's message
+        assistant_msg: Assistant's response
         
-        Args:
-            question: Question asked
-            answer: User's answer
-        """
-        pass
+    Returns:
+        Updated state dictionary
     
-    def is_complete(self):
-        """Check if the interview is complete."""
-        pass
+    TODO:
+    - Add stage transition logic
+    - Track question-answer pairs for scoring
+    - Detect completion conditions
+    - Handle role-specific state updates
+    """
+    # Append conversation turn to history
+    state["history"].append({
+        "user": user_msg,
+        "assistant": assistant_msg
+    })
     
-    def get_session_data(self):
-        """Get complete session data for scoring."""
-        pass
+    # TODO: Add logic to transition between stages
+    # TODO: Extract and store answers for final scoring
+    # TODO: Check if interview should move to next stage
+    
+    return state
