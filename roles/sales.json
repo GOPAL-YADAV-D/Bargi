@@ -1,0 +1,33 @@
+{
+  "role": "Sales Representative",
+  "description": "Sales interview focusing on relationship building and closing skills",
+  "stages": [
+    {
+      "name": "Introduction",
+      "duration_minutes": 5,
+      "topics": ["background", "sales experience", "motivation"]
+    },
+    {
+      "name": "Sales Skills",
+      "duration_minutes": 25,
+      "topics": ["prospecting", "discovery", "objection handling", "closing"]
+    },
+    {
+      "name": "Scenario Role-play",
+      "duration_minutes": 20,
+      "topics": ["pitch delivery", "customer engagement", "negotiation"]
+    },
+    {
+      "name": "Questions",
+      "duration_minutes": 10,
+      "topics": ["candidate questions", "wrap-up"]
+    }
+  ],
+  "evaluation_criteria": [
+    "Communication effectiveness",
+    "Persuasion skills",
+    "Customer understanding",
+    "Resilience",
+    "Results orientation"
+  ]
+}

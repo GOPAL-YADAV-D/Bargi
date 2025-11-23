@@ -1,0 +1,13 @@
+gradio>=4.0
+requests
+python-dotenv
+langchain
+langchain-community
+langchain-core
+langchain-text-splitters
+faiss-cpu
+chromadb
+groq
+sounddevice
+soundfile
+numpy

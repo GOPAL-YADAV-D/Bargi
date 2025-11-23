@@ -1,0 +1,33 @@
+{
+  "role": "Software Engineer",
+  "description": "Technical interview for software engineering positions",
+  "stages": [
+    {
+      "name": "Introduction",
+      "duration_minutes": 5,
+      "topics": ["background", "experience", "motivation"]
+    },
+    {
+      "name": "Technical Assessment",
+      "duration_minutes": 30,
+      "topics": ["algorithms", "data structures", "system design", "coding"]
+    },
+    {
+      "name": "Behavioral",
+      "duration_minutes": 15,
+      "topics": ["teamwork", "problem-solving", "leadership"]
+    },
+    {
+      "name": "Questions",
+      "duration_minutes": 10,
+      "topics": ["candidate questions", "wrap-up"]
+    }
+  ],
+  "evaluation_criteria": [
+    "Technical knowledge",
+    "Problem-solving approach",
+    "Communication clarity",
+    "Code quality",
+    "System design thinking"
+  ]
+}

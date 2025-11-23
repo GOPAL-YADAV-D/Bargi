@@ -1,0 +1,33 @@
+{
+  "role": "Product Manager",
+  "description": "Product management interview focusing on strategy and execution",
+  "stages": [
+    {
+      "name": "Introduction",
+      "duration_minutes": 5,
+      "topics": ["background", "product experience", "motivation"]
+    },
+    {
+      "name": "Product Thinking",
+      "duration_minutes": 25,
+      "topics": ["product strategy", "feature prioritization", "market analysis"]
+    },
+    {
+      "name": "Execution & Leadership",
+      "duration_minutes": 20,
+      "topics": ["stakeholder management", "roadmap planning", "metrics"]
+    },
+    {
+      "name": "Questions",
+      "duration_minutes": 10,
+      "topics": ["candidate questions", "wrap-up"]
+    }
+  ],
+  "evaluation_criteria": [
+    "Strategic thinking",
+    "Customer empathy",
+    "Data-driven decision making",
+    "Communication skills",
+    "Leadership potential"
+  ]
+}
