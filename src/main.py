@@ -4,106 +4,182 @@ load_dotenv()
 
 import gradio as gr
 import os
-from router import handle_message
+from router import handle_message, handle_audio
 from state_manager import new_state
-from stt_whisper import transcribe_audio
 
 # Initialize interview state once
 interview_state = new_state()
 
-def process_turn(user_text, user_audio, history):
+def text_mode(user_text, history):
     """
-    Handle a single conversation turn.
+    Handle text-based conversation turn.
+    
+    Args:
+        user_text (str): User's typed message
+        history (list): Chat history in messages format
+        
+    Returns:
+        tuple: (updated_history, audio_output, score)
     """
     global interview_state
     
-    # 1. Handle Audio Input (STT)
-    if user_audio is not None:
-        try:
-            transcription = transcribe_audio(user_audio)
-            if transcription:
-                user_text = transcription
-        except Exception as e:
-            print(f"STT Error: {e}")
-            pass
-    
     if not user_text:
-        return history, None
-
-    # 2. Route message
+        return history, None, None
+    
+    # Route message through the router
     response_data = handle_message(user_text, interview_state)
     
-    # 3. Update History in messages format for Gradio 6.0
-    # Gradio 6.0 Chatbot expects messages format: [{"role": "user", "content": "..."}, ...]
+    # Update history in messages format for Gradio 6.0
     if history is None:
         history = []
     
     history.append({"role": "user", "content": user_text})
     history.append({"role": "assistant", "content": response_data["reply_text"]})
     
-    # 4. Return updated history and audio path (if any)
-    return history, response_data["reply_audio"]
+    # Return score for UI panel
+    return history, response_data.get("reply_audio"), response_data.get("score")
+
+
+def voice_mode(user_audio, history):
+    """
+    Handle voice-based conversation turn.
+    
+    Args:
+        user_audio (str): Path to user's audio file
+        history (list): Chat history in messages format
+        
+    Returns:
+        tuple: (updated_history, audio_output_path, score)
+    """
+    global interview_state
+    
+    if not user_audio:
+        return history, None, None
+    
+    # Route audio through the voice handler (STT + Router + TTS)
+    response_data = handle_audio(user_audio, interview_state)
+    
+    # The response_data contains both transcribed user text (implicitly handled)
+    # and the assistant's reply. We need to add both to history.
+    
+    # Note: handle_audio internally calls handle_message, which updates state.history
+    # We can extract the last user message from the state
+    if interview_state.get("history"):
+        last_turn = interview_state["history"][-1]
+        user_text = last_turn.get("user", "")
+    else:
+        user_text = "[Voice input]"
+    
+    # Update Gradio history
+    if history is None:
+        history = []
+    
+    history.append({"role": "user", "content": user_text})
+    history.append({"role": "assistant", "content": response_data["reply_text"]})
+    
+    # Return audio output and score for UI panel
+    return history, response_data.get("reply_audio"), response_data.get("score")
 
 def main():
     """
     Main entrypoint for the interview practice agent.
     """
     with gr.Blocks(title="AI Interview Practice Agent") as demo:
-        gr.Markdown("# 🤖 AI Interview Practice Agent")
-        gr.Markdown("Practice your soft skills, technical knowledge, and behavioral answers.")
+        # ============================================
+        # HEADER SECTION
+        # ============================================
+        gr.Markdown("# 🎙️ AI Interview Practice Agent")
+        gr.Markdown("**Powered by Groq LLM, Whisper.cpp (STT), Piper (TTS), LangChain Scoring**")
         
-        chatbot = gr.Chatbot(height=500)
-        
+        # ============================================
+        # MAIN CHAT INTERFACE (2-COLUMN LAYOUT)
+        # ============================================
         with gr.Row():
-            with gr.Column(scale=8):
-                msg_input = gr.Textbox(
-                    show_label=False, 
-                    placeholder="Type your answer here...",
-                    container=False
-                )
-            with gr.Column(scale=1):
-                audio_input = gr.Audio(
-                    sources=["microphone"], 
-                    type="filepath",
-                    show_label=False,
-                    container=False
-                )
+            with gr.Column(scale=7):
+                chatbot = gr.Chatbot(height=450, label="Interview Conversation")
+            with gr.Column(scale=3):
+                score_panel = gr.JSON(label="Latest Score", value=None)
         
+        # ============================================
+        # INPUT AREAS
+        # ============================================
+        
+        # A) Text input row
         with gr.Row():
-            submit_btn = gr.Button("Send", variant="primary")
-            clear_btn = gr.Button("Clear Session")
-            
-        # Hidden audio output for TTS
-        audio_output = gr.Audio(
-            label="Assistant Voice", 
-            autoplay=True, 
-            visible=False
+            text_input = gr.Textbox(
+                label="Type your response...",
+                placeholder="Enter your answer here and press Send",
+                scale=4
+            )
+            text_button = gr.Button("Send", variant="primary", scale=1)
+        
+        # B) Voice input row
+        with gr.Row():
+            audio_input = gr.Audio(
+                sources=["microphone"],
+                type="filepath",
+                label="Speak your answer",
+                scale=4
+            )
+            voice_button = gr.Button("Send Voice", variant="secondary", scale=1)
+        
+        # ============================================
+        # OUTPUT
+        # ============================================
+        audio_output = gr.Audio(label="Assistant Voice Reply", autoplay=True)
+        
+        # ============================================
+        # RESET BUTTON
+        # ============================================
+        reset_btn = gr.Button("🔄 Restart Interview", variant="stop", size="sm")
+        
+        # ============================================
+        # FOOTER
+        # ============================================
+        gr.Markdown("### 💡 Tip: You can switch between typing and speaking anytime.")
+        
+        # ============================================
+        # BACKEND HANDLERS
+        # ============================================
+        
+        # Text mode handler
+        def handle_text_submit(user_text, history):
+            updated_history, audio_out, score = text_mode(user_text, history)
+            return "", updated_history, audio_out, score
+        
+        text_button.click(
+            handle_text_submit,
+            inputs=[text_input, chatbot],
+            outputs=[text_input, chatbot, audio_output, score_panel]
         )
         
-        # Event handlers
-        def user_chat(user_text, user_audio, history):
-            # Process the turn and return updated history in messages format
-            updated_history, audio_path = process_turn(user_text, user_audio, history or [])
-            return "", None, updated_history, audio_path
-
-        submit_btn.click(
-            user_chat,
-            inputs=[msg_input, audio_input, chatbot],
-            outputs=[msg_input, audio_input, chatbot, audio_output]
+        text_input.submit(
+            handle_text_submit,
+            inputs=[text_input, chatbot],
+            outputs=[text_input, chatbot, audio_output, score_panel]
         )
         
-        msg_input.submit(
-            user_chat,
-            inputs=[msg_input, audio_input, chatbot],
-            outputs=[msg_input, audio_input, chatbot, audio_output]
+        # Voice mode handler
+        def handle_voice_submit(user_audio, history):
+            updated_history, audio_out, score = voice_mode(user_audio, history)
+            return None, updated_history, audio_out, score
+        
+        voice_button.click(
+            handle_voice_submit,
+            inputs=[audio_input, chatbot],
+            outputs=[audio_input, chatbot, audio_output, score_panel]
         )
         
-        def clear_session():
+        # Reset session handler
+        def reset_session():
             global interview_state
             interview_state = new_state()
-            return [], None
-            
-        clear_btn.click(clear_session, outputs=[chatbot, audio_output])
+            return [], None, None  # chatbot history, audio, scores
+        
+        reset_btn.click(
+            fn=reset_session,
+            outputs=[chatbot, audio_output, score_panel]
+        )
 
     # Launch the app
     demo.launch(server_name="0.0.0.0", server_port=7860)

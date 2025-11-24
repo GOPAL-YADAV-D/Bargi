@@ -3,6 +3,9 @@ from groq_client import groq_chat
 from rag_loader import load_role_context
 from scoring_langchain import score_answer
 from state_manager import update_state
+from final_summary import generate_final_summary
+from stt_whisper import transcribe_audio
+from tts_piper import synthesize_speech
 
 
 def handle_message(message: str, state: dict) -> dict:
@@ -30,10 +33,19 @@ def handle_message(message: str, state: dict) -> dict:
         state["stage"] = "await_role"
         return {
             "reply_text": "Welcome! Which role would you like to practice for? (engineer, product, sales)",
-            "reply_audio": None
+            "reply_audio": None,
+            "score": None  # STAGE 15: Returning score for UI panel
         }
     
     if state["stage"] == "await_role":
+        # Validate non-empty input
+        if not message or not message.strip():
+            return {
+                "reply_text": "Please select a role: engineer, product, or sales.",
+                "reply_audio": None,
+                "score": None  # STAGE 15: Returning score for UI panel
+            }
+        
         # Extract role from user's message
         role_input = message.lower().strip()
         
@@ -50,10 +62,11 @@ def handle_message(message: str, state: dict) -> dict:
         role = role_map.get(role_input)
         
         if not role:
-            # Invalid role selection
+            # Invalid role selection - provide clear guidance
             return {
-                "reply_text": "I didn't recognize that role. Please choose: engineer, product, or sales.",
-                "reply_audio": None
+                "reply_text": "Please select engineer, product, or sales.",
+                "reply_audio": None,
+                "score": None  # STAGE 15: Returning score for UI panel
             }
         
         # Save role to state
@@ -65,7 +78,8 @@ def handle_message(message: str, state: dict) -> dict:
         if not context:
             return {
                 "reply_text": f"Sorry, I couldn't load the knowledge base for {role}. Please try again.",
-                "reply_audio": None
+                "reply_audio": None,
+                "score": None  # STAGE 15: Returning score for UI panel
             }
         
         state["context"] = context
@@ -82,7 +96,8 @@ def handle_message(message: str, state: dict) -> dict:
         
         return {
             "reply_text": f"Great! Let's begin the {context.get('role', role)} interview.\n\n{first_question}",
-            "reply_audio": None
+            "reply_audio": None,
+            "score": None  # STAGE 15: Returning score for UI panel
         }
     
     # =========================================
@@ -90,6 +105,14 @@ def handle_message(message: str, state: dict) -> dict:
     # =========================================
     
     if state["stage"] == "interview":
+        # Validate non-empty input
+        if not message or not message.strip():
+            return {
+                "reply_text": "I didn't catch that. Please provide your answer.",
+                "reply_audio": None,
+                "score": None  # STAGE 15: Returning score for UI panel
+            }
+        
         # Check if this is a user answer (not the first turn)
         if state["current_question"]:
             # Score the user's answer to the previous question
@@ -149,9 +172,22 @@ def handle_message(message: str, state: dict) -> dict:
             else:
                 update_state(state, "", followup_question)
             
+            # STAGE 15: Returning score for UI panel
+            # Return the score from the answer we just evaluated
+            score_to_return = None
+            if state["scores"]:
+                latest_score = state["scores"][-1]
+                score_to_return = {
+                    "communication": latest_score.get("communication", 0),
+                    "technical": latest_score.get("technical", 0),
+                    "behavioral": latest_score.get("behavioral", 0),
+                    "structure": latest_score.get("structure", 0)
+                }
+            
             return {
                 "reply_text": followup_question,
-                "reply_audio": None
+                "reply_audio": None,
+                "score": score_to_return
             }
         
         else:
@@ -163,34 +199,15 @@ def handle_message(message: str, state: dict) -> dict:
             if idx >= state["max_questions"] or idx >= len(base_questions):
                 state["stage"] = "finished"
                 
-                # TODO (Stage 11): Generate comprehensive final summary using LangChain
-                # - Aggregate all scores from state["scores"]
-                # - Compare answers against sample_good_answers and sample_bad_answers
-                # - Provide detailed feedback and action items
-                
-                # Placeholder summary for now
-                if state["scores"]:
-                    avg_comm = sum(s.get("communication", 0) for s in state["scores"] if "error" not in s) / max(len(state["scores"]), 1)
-                    avg_tech = sum(s.get("technical", 0) for s in state["scores"] if "error" not in s) / max(len(state["scores"]), 1)
-                    avg_behav = sum(s.get("behavioral", 0) for s in state["scores"] if "error" not in s) / max(len(state["scores"]), 1)
-                    avg_struct = sum(s.get("structure", 0) for s in state["scores"] if "error" not in s) / max(len(state["scores"]), 1)
-                    
-                    summary = (
-                        f"🎉 Interview Complete!\n\n"
-                        f"**Overall Scores:**\n"
-                        f"- Communication: {avg_comm:.1f}/10\n"
-                        f"- Technical: {avg_tech:.1f}/10\n"
-                        f"- Behavioral: {avg_behav:.1f}/10\n"
-                        f"- Structure: {avg_struct:.1f}/10\n\n"
-                        f"Thank you for practicing with me! "
-                        f"Detailed feedback will be available in Stage 11."
-                    )
-                else:
-                    summary = "Interview complete! Thank you for your time."
+                # Generate comprehensive final summary using final_summary module
+                # This aggregates scores, collects feedback, and uses Groq LLM
+                # to create a detailed, personalized evaluation report
+                summary = generate_final_summary(state)
                 
                 return {
                     "reply_text": summary,
-                    "reply_audio": None
+                    "reply_audio": None,  # TODO (Stage 12): Add TTS for summary
+                    "score": None  # STAGE 15: Returning score for UI panel
                 }
             
             # Get the next main question
@@ -209,7 +226,8 @@ def handle_message(message: str, state: dict) -> dict:
             
             return {
                 "reply_text": next_main_question,
-                "reply_audio": None
+                "reply_audio": None,
+                "score": None  # STAGE 15: Returning score for UI panel (no scoring for questions)
             }
     
     # =========================================
@@ -217,9 +235,12 @@ def handle_message(message: str, state: dict) -> dict:
     # =========================================
     
     if state["stage"] == "finished":
+        # Interview has already ended and summary was shown
+        # User is still sending messages - remind them to restart
         return {
-            "reply_text": "The interview has ended. Refresh the page to start a new session.",
-            "reply_audio": None
+            "reply_text": "The interview has ended. Please click the '🔄 Restart Interview' button to begin a new session.",
+            "reply_audio": None,
+            "score": None  # STAGE 15: Returning score for UI panel
         }
     
     # =========================================
@@ -228,22 +249,89 @@ def handle_message(message: str, state: dict) -> dict:
     
     return {
         "reply_text": "I'm not sure how to respond. Please restart the interview.",
-        "reply_audio": None
+        "reply_audio": None,
+        "score": None  # STAGE 15: Returning score for UI panel
     }
 
 
-# TODO: Add voice mode integration
-# - Integrate Whisper.cpp for STT (transcribe_audio)
-# - Integrate Piper for TTS (synthesize_speech)
-# - Add audio_input parameter to handle_message
-# - Return audio_path in reply_audio field
+# =========================================
+# STAGE 12: VOICE MODE INTEGRATION
+# =========================================
 
-# TODO: Multi-round interview flow improvements
-# - Add persona handling (confused, efficient, chatty candidates)
-# - Add adaptive difficulty based on performance
-# - Add time tracking per question
+def handle_audio(audio_path: str, state: dict) -> dict:
+    """
+    Handle audio input from the user (full voice mode).
+    
+    This function:
+    1. Transcribes audio to text using Whisper.cpp
+    2. Routes the text through handle_message()
+    3. Converts the reply text to speech using Piper TTS
+    4. Returns both text and audio responses
+    
+    Args:
+        audio_path (str): Path to the user's audio file
+        state (dict): Current interview state
+        
+    Returns:
+        dict: Response with reply_text and reply_audio
+              {
+                  "reply_text": str,
+                  "reply_audio": str or None (path to audio file)
+              }
+    """
+    
+    # Step 1: Transcribe audio to text using Whisper STT
+    try:
+        user_text = transcribe_audio(audio_path)
+        
+        # Safe handling: check for empty or whitespace-only transcription
+        if not user_text or not user_text.strip():
+            return {
+                "reply_text": "I couldn't hear you clearly. Please try speaking again or use text input.",
+                "reply_audio": None,
+                "score": None  # STAGE 15: Returning score for UI panel
+            }
+    except Exception as e:
+        # Whisper STT failure - ask user to repeat or use text mode
+        print(f"Whisper STT Error: {e}")
+        return {
+            "reply_text": "Speech recognition failed. Please try again or use text input instead.",
+            "reply_audio": None,
+            "score": None  # STAGE 15: Returning score for UI panel
+        }
+    
+    # Step 2: Route the transcribed text through the normal message handler
+    response = handle_message(user_text, state)
+    reply_text = response["reply_text"]
+    
+    # Step 3: Convert the reply text to speech using Piper TTS
+    try:
+        audio_output_path = synthesize_speech(reply_text)
+        
+        # STAGE 15: Returning score for UI panel
+        return {
+            "reply_text": reply_text,
+            "reply_audio": audio_output_path,
+            "score": response.get("score")  # Pass through score from handle_message
+        }
+    except Exception as e:
+        # Piper TTS failure - still return text reply without audio
+        print(f"Piper TTS Error: {e}")
+        print("Continuing with text-only response...")
+        # STAGE 15: Returning score for UI panel
+        return {
+            "reply_text": reply_text,
+            "reply_audio": None,  # Graceful degradation: text works, audio fails
+            "score": response.get("score")  # Pass through score from handle_message
+        }
 
-# TODO: Final summary enhancements
-# - Use LangChain to generate detailed narrative feedback
-# - Compare against sample_good_answers and sample_bad_answers
-# - Provide specific action items for improvement
+
+# TODO: Add voice configuration options
+# - Allow users to select different Piper voices
+# - Add voice speed/pitch controls
+# - Support multiple languages via Whisper models
+
+# TODO: Optimize audio processing
+# - Add background processing for TTS to reduce latency
+# - Cache common responses to avoid re-synthesis
+# - Compress audio files for faster delivery

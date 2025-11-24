@@ -1,54 +1,85 @@
-# Base image
+# Production-ready Dockerfile for AI Interview Agent
+# Base: Python 3.10 slim for minimal size
 FROM python:3.10-slim
-
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    cmake \
-    git \
-    ffmpeg \
-    curl \
-    wget \
-    libasound2-dev \
-    portaudio19-dev \
-    && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
 WORKDIR /app
 
-# --- Whisper.cpp Setup ---
-# Clone and build Whisper.cpp
-RUN git clone https://github.com/ggerganov/whisper.cpp.git && \
-    cd whisper.cpp && \
+# =============================================
+# SYSTEM DEPENDENCIES
+# =============================================
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    ffmpeg \
+    libsndfile1 \
+    curl \
+    wget \
+    git \
+    sox \
+    && rm -rf /var/lib/apt/lists/*
+
+# =============================================
+# WHISPER.CPP SETUP
+# =============================================
+# Clone and build whisper.cpp
+RUN git clone https://github.com/ggerganov/whisper.cpp.git /app/whisper.cpp && \
+    cd /app/whisper.cpp && \
     make
 
-# Download a base model for Whisper (ggml-base.en.bin)
-RUN cd whisper.cpp/models && \
-    ./download-ggml-model.sh base.en
+# Download base.en model for Whisper
+RUN cd /app/whisper.cpp/models && \
+    curl -LO https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.en.bin
 
-# --- Piper TTS Setup ---
-# Download Piper binary (Linux x86_64)
-RUN wget -O piper.tar.gz https://github.com/rhasspy/piper/releases/download/v1.2.0/piper_linux_x86_64.tar.gz && \
-    tar -xvf piper.tar.gz && \
-    rm piper.tar.gz
-
-# Download a voice model for Piper (en_US-lessac-medium)
-RUN mkdir -p piper_voices && \
-    wget -O piper_voices/en_US-lessac-medium.onnx https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/lessac/medium/en_US-lessac-medium.onnx && \
-    wget -O piper_voices/en_US-lessac-medium.onnx.json https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/lessac/medium/en_US-lessac-medium.onnx.json
-
-# --- Python Setup ---
-# Copy requirements
-COPY requirements.txt .
+# =============================================
+# PYTHON DEPENDENCIES
+# =============================================
+# Copy requirements file first (for layer caching)
+COPY requirements.txt /app/requirements.txt
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy source code
-COPY . .
+# =============================================
+# PIPER TTS SETUP
+# =============================================
+# Install piper-tts
+RUN pip install --no-cache-dir piper-tts
 
-# Expose Gradio port
+# Download Piper voice model
+RUN python3 -m piper.download en_US-lessac-medium
+
+# =============================================
+# COPY PROJECT FILES
+# =============================================
+# Copy source code
+COPY src/ /app/src/
+
+# Copy role configuration files
+COPY roles/ /app/roles/
+
+# =============================================
+# ENVIRONMENT VARIABLES
+# =============================================
+# Set default environment variable for Groq API key
+# Override this with: docker run -e GROQ_API_KEY=your_key_here
+ENV GROQ_API_KEY=""
+
+# Set Python to unbuffered mode for better logging
+ENV PYTHONUNBUFFERED=1
+
+# =============================================
+# EXPOSE PORT
+# =============================================
+# Gradio default port
 EXPOSE 7860
 
-# Run the application
-CMD ["python", "src/main.py"]
+# =============================================
+# HEALTH CHECK
+# =============================================
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:7860/ || exit 1
+
+# =============================================
+# ENTRYPOINT
+# =============================================
+ENTRYPOINT ["python", "src/main.py"]
